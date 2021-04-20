@@ -1,6 +1,8 @@
 import numpy
 from shape import Shape
 
+#https://github.com/zcold/matplotlib-3d-objects
+
 class Sphere(Shape):
 
   def __init__(self, ax, x = 0, y = 0, z = 0,

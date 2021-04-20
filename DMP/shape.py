@@ -1,3 +1,5 @@
+#https://github.com/zcold/matplotlib-3d-objects
+
 class Shape(object):
 
   def __init__(self, ax, x = 0., y = 0., z = 0., a = 1., **kwargs) :
