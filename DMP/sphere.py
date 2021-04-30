@@ -1,5 +1,5 @@
 import numpy
-from shape import Shape
+from DMP.shape import Shape
 
 #https://github.com/zcold/matplotlib-3d-objects
 

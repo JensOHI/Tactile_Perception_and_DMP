@@ -7,8 +7,8 @@ mpl.use('TkAgg') #For interactive plots https://stackoverflow.com/questions/4984
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-from canonical_system import CanonicalSystem
-from sphere import Sphere
+from DMP.canonical_system import CanonicalSystem
+from DMP.sphere import Sphere
 
 
 class PositionDMP():
@@ -110,7 +110,7 @@ class PositionDMP():
         # TODO: Implement the transformation system differential equation for the acceleration, given that you know the
         # values of the following variables:
         # self.alpha, self.beta, self.gp, self.p, self.dp, tau, x
-        self.ddp = self.alpha * (self.beta * (self.gp - self.p) - tau*self.dp) + fp(x) #+ P(self.p, self.dp)
+        self.ddp = self.alpha * (self.beta * (self.gp - self.p) - tau*self.dp) + fp(x) + P(self.p, self.dp)
         self.ddp /= tau**2
 
 
@@ -124,6 +124,7 @@ class PositionDMP():
 
     def rollout(self, ts, tau):
         self.reset()
+
 
         if np.isscalar(tau):
             tau = np.full_like(ts, tau)
@@ -192,21 +193,21 @@ class PositionDMP():
         self.train_dd_p = dd_p
 
 
-    def plot2DDMP(self, demo_p,dmp_p, t):
+    def plot2DDMP(self, demo_p,dmp_p, t, tNew):
         # 2D plot the DMP against the original demonstration
         fig1, axs = plt.subplots(3, 1, sharex=True)
         axs[0].plot(t, demo_p[:, 0], label='Demonstration')
-        axs[0].plot(t, dmp_p[:, 0], label='DMP')
+        axs[0].plot(tNew, dmp_p[:, 0], label='DMP')
         axs[0].set_xlabel('t (s)')
         axs[0].set_ylabel('X (m)')
 
         axs[1].plot(t, demo_p[:, 1], label='Demonstration')
-        axs[1].plot(t, dmp_p[:, 1], label='DMP')
+        axs[1].plot(tNew, dmp_p[:, 1], label='DMP')
         axs[1].set_xlabel('t (s)')
         axs[1].set_ylabel('Y (m)')
 
         axs[2].plot(t, demo_p[:, 2], label='Demonstration')
-        axs[2].plot(t, dmp_p[:, 2], label='DMP')
+        axs[2].plot(tNew, dmp_p[:, 2], label='DMP')
         axs[2].set_xlabel('t (s)')
         axs[2].set_ylabel('Z (m)')
         axs[2].legend()
