@@ -37,7 +37,7 @@ class PositionDMP():
         #Obstacles
         numObstacles = 1
         #Obstacles first 3 element is the vector and the last is the radius of the sphere.
-        self.obstacles = [[0.52445584, 0.39893147, 0.41805384, 0.01], [0.661281, 0.156913, 0.382968, 0.02]]#np.random.random((numObstacles, 3)) * 2 - 1
+        self.obstacles = []#[[0.52445584, 0.39893147, 0.41805384, 0.01], [0.661281, 0.156913, 0.382968, 0.02]]#np.random.random((numObstacles, 3)) * 2 - 1
         self.gamma_o = 1000
         self.gamma_p = 1000
         self.gamma_d = 50
@@ -110,7 +110,7 @@ class PositionDMP():
         # TODO: Implement the transformation system differential equation for the acceleration, given that you know the
         # values of the following variables:
         # self.alpha, self.beta, self.gp, self.p, self.dp, tau, x
-        self.ddp = self.alpha * (self.beta * (self.gp - self.p) - tau*self.dp) + fp(x) + P(self.p, self.dp)
+        self.ddp = self.alpha * (self.beta * (self.gp - self.p) - tau*self.dp) + fp(x) #+ P(self.p, self.dp)
         self.ddp /= tau**2
 
 
