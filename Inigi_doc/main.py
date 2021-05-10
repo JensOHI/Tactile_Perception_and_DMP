@@ -5,6 +5,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 
 
+
 class Robot(RTDEControlInterface, RTDEIOInterface, RTDEReceiveInterface):
     def __init__(self, ip):
         RTDEControlInterface.__init__(self, ip, True, True)

@@ -14,7 +14,7 @@ class ServoControl:
 
         
         pose = positionalTrajectory[0]
-        print(pose, type(pose))
+        #print(pose, type(pose))
         self.robot.moveL(pose)
         pointsTouched = 0
         for point in positionalTrajectory:
