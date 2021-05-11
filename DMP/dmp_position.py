@@ -9,6 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from DMP.canonical_system import CanonicalSystem
 from DMP.sphere import Sphere
+import scipy
 
 
 class PositionDMP():
@@ -212,7 +213,32 @@ class PositionDMP():
         axs[2].set_ylabel('Z (m)')
         axs[2].legend()
 
+    def getForceVector(self):
+        with open("forceVector.txt", 'r') as file:
+            vector = file.readline().split(" ")
+        vector = [float(i) for i in vector]
+       #u = np.sin(np.pi * vector[0]) * np.cos(np.pi * vector[1]) * np.cos(np.pi * vector[2])
+       # v = -np.cos(np.pi * vector[0]) * np.sin(np.pi * vector[1]) * np.cos(np.pi * vector[2])
+       # w = np.sqrt(2/3) * np.cos(np.pi * vector[0]) * np.cos(np.pi * vector[1]) * np.sin(np.pi * vector[2])
+        #vector.append(u)
+        #vector.append(v)
+        #vector.append(w)
+        return vector
+    
+    def generateVisitPoints(self, vector):
+        nVector = vector[3:6]
+        point = vector[0:3]
+        size = 0.02
+        nrOfPoints = 5
+        Q = scipy.linalg.null_space(np.asmatrix(nVector))
+        randomPoints = np.random.rand(2,nrOfPoints) - 0.5
+        points = np.asarray(point).reshape((3,1)) + np.matmul(Q,randomPoints*size)
+        return points
+        
+
     def plot3DDMP(self, demo_p, dmp_p):
+        vector = self.getForceVector()
+        points = self.generateVisitPoints(vector)
         # 3D plot the DMP against the original demonstration
         fig2 = plt.figure(2)
         ax = plt.axes(projection='3d')
@@ -224,6 +250,9 @@ class PositionDMP():
         for obstacle in self.obstacles:
             #ax.scatter(obstacle[0], obstacle[1], obstacle[2], marker='o', color=(0, 1, 0))
             s = Sphere(ax, x = obstacle[0], y = obstacle[1], z = obstacle[2], radius = obstacle[3])
+        ax.quiver(vector[0],vector[1],vector[2],vector[3],vector[4],vector[5], length=0.05, color='black', label="Force Vector")
+        ax.scatter(points[0,:], points[1,:], points[2,:], label="Points to visit")
         ax.legend()
+        
         # ax.view_init(30,0)
         plt.show()

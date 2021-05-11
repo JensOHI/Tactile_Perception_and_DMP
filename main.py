@@ -9,6 +9,7 @@ from DMP.DMP import DMP
 from UR5_code.ServoControl import ServoControl
 from FTSensor.FTSensor import FTSensor
 import numpy as np
+import threading
 
 def combine(dmp_p):
     traj = []
@@ -30,37 +31,45 @@ if __name__ == '__main__':
 
     #print(robot.getActualTCPPose())
     #homePosition = [-0.4332957949604125, 0.03666119829241225, 0.3959256349973932, 2.3481883870878946, 2.087005826292801, 6.066972042799972e-05]
-    homeQ = [-0.3917191664325159, -1.7317592106261195, 1.9507082144366663, -1.7880441151061, -1.5626705328570765, -0.2774770895587366]
+    homeQ = [-0.3917191664325159, -1.7317592106261195, 1.9507082144366663, -1.7880441151061, -1.5626705328570765, -1.62141088]
     robot.moveJ(homeQ)
     
     newGoal = [-0.8211983656828382, -0.05282045087594499, 0.07058759409960978, -0.5646979690491176, -3.0894219083737653, 0.026431204595942472]
-    input("Start demonstration! Press enter...")
-
+    
+    #input("Start demonstration! Press enter...")
     #demonstrate = Demonstrate(robot)
     #trajectory = demonstrate.show(8,saveAsFile=True)
-
+    
+    input("Start noise collection! Press enter...")
     ft = FTSensor(robot)
     ft.noiseFT(5)
     input("Start CUSUM. Press enter...")
-    ft.cusum(20)
+    event = threading.Event()
+    forceThread = threading.Thread(target=ft.cusum, args=(event, 20,))
+    forceThread.start()
+    
+    
 
-    '''
-    scaling = 2
+    scaling = 1
     dmp = DMP()
     #dmp.setGoal(newGoal[0:3])
     #obstacle = generateAObstacle(trajectory)
     #print(obstacle)
     #dmp.setObstacle(obstacle)
     dmp_p, dmp_dp, dmp_dpp = dmp.rollout(scaling)
-    dmp.plotTrajectory()
 
     
     traj = combine(dmp_p)
-    input("Play DMP. Press enter...")
+    #input("Play DMP. Press enter...")
     #robot.moveL(traj[-1])
     servoControl = ServoControl(robot)
-    servoControl.run(traj, scaling)
-    '''
+    servoThread = threading.Thread(target=servoControl.run, args=(event, traj, scaling,))
+    servoThread.start()
+    
+    
+    #servoThread.join()
+    #dmp.plotTrajectory()
+    
 
     
 
