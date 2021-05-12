@@ -10,25 +10,35 @@ class FTSensor:
         self.noiseMagnitudeOfForce = []
         self.frequency = 1/500
         self.robot = robot
-        self.cusumHighThreshold = 70
+        self.cusumHighThreshold = 10
         self.noiseMean = 0
         self.noiseSTD = 1
-        self.contactMean = 4 #Newton
+        self.contactMean = 1 #Newton
         self.contactSTD = 1
         self.acceleration = []
-        self.payloadMass = 3
+        self.payloadMass = 0.5
         self.filename = "noiseValues.txt"
 
     def convertForceInBase2TCP(self,ftInBase):
         tcpPose = self.robot.getActualTCPPose()
         rot = R.from_rotvec(tcpPose[3:6])
         rMatrix = scipy.linalg.inv(rot.as_matrix())
-        return rMatrix @ ftInBase[0:3]
+        return rMatrix @ ftInBase
+
+    def convertAccInTCP2Base(self, acc):
+        tcpPose = self.robot.getActualTCPPose()
+        rot = R.from_rotvec(tcpPose[3:6])
+        rMatrix = rot.as_matrix()
+        return rMatrix @ acc
+
 
     def saveNoiseValues(self):
         print("Saving",self.filename)
-        with open(self.filename, 'w') as file:
-            string = str(self.noiseMean) + " " + str(self.noiseSTD) + " " + str(self.acceleration)[1:-1]
+        with open(self.filename, 'w+') as file:
+            string = str(self.noiseMean) + " " + str(self.noiseSTD) + " "
+            for acc in self.acceleration:
+                string += str(acc) + " "
+            string = string[0:-1]
             file.write(string)
 
     def noiseFT(self, duration):
@@ -41,11 +51,11 @@ class FTSensor:
             startTime = time.time()
 
             ftInBase = self.robot.getActualTCPForce()
-            ftInTCP = self.convertForceInBase2TCP(ftInBase)
+            ftInTCP = self.convertForceInBase2TCP(np.asarray(ftInBase[0:3]))
             
             magnitudeOfForce = np.linalg.norm(ftInTCP)
             self.noiseMagnitudeOfForce.append(magnitudeOfForce)
-            accelerations.append(self.robot.getActualToolAccelerometer())
+            accelerations.append(self.convertAccInTCP2Base(self.robot.getActualToolAccelerometer()))
 
             diff = time.time() - startTime
             if(diff < self.frequency):
@@ -59,7 +69,7 @@ class FTSensor:
         print("Noise mean:", self.noiseMean, "Noise std:", self.noiseSTD,"Acceleration:",self.acceleration)
 
     def saveForceVector(self, vector, pose):
-        with open("forceVector.txt", 'w') as file:
+        with open("forceVector.txt", 'w+') as file:
             string = ""
             for value in pose:
                 string += str(value) + " "
@@ -69,21 +79,20 @@ class FTSensor:
             file.write(string)
     
     def loadNoiseValues(self):
-        print("Loading",self.filename)
+        #print("Loading",self.filename)
         with open(self.filename, 'r') as file:
-            values = file.readline.split(" ")
+            values = file.readline().split(" ")
         self.noiseMean =  float(values[0])
         self.noiseSTD = float(values[1])
-        self.acceleration = [float(acc) for acc in values[2:-1]]
+        self.acceleration = [float(values[2]), float(values[3]), float(values[4])]
         self.contactSTD = self.noiseSTD
-        print(self.noiseMean,self.noiseSTD,self.acceleration)
 
     def cusum(self, event, nrOfObsPerComparision):
         self.loadNoiseValues()
         cusumValue = 0
         magnitudeList = []
         cusumValues = [0]
-        print("Waiting for servoControl to start!")
+        #print("Waiting for servoControl to start!")
         event.wait()
         event.clear()
         
@@ -94,9 +103,13 @@ class FTSensor:
         self.robot.zeroFtSensor()
         resetTime = time.time()
         cusumCancelled = False
-        print("Starting CUSUM!")
+        #print("Starting CUSUM!")
         while self.cusumHighThreshold > cusumValue:
             startTime = time.time()
+
+            if time.time() - resetTime > 0.5:
+                self.robot.zeroFtSensor()
+                resetTime = time.time()
 
             if event.is_set():
                 cusumCancelled = True
@@ -105,11 +118,13 @@ class FTSensor:
 
            
             ftInBase = self.robot.getActualTCPForce()
+            #print(ftInBase)
             #print(self.robot.getActualToolAccelerometer(), self.acceleration, self.payloadMass)
-            accelerations.append(self.robot.getActualToolAccelerometer())
-            inertiaCompensation = (abs(np.asarray(accelerations[-1])) - abs(np.asarray(self.acceleration))) * self.payloadMass
+            accelerations.append(self.convertAccInTCP2Base(self.robot.getActualToolAccelerometer()))
+            inertiaCompensation = (np.asarray(accelerations[-1]) - np.asarray(self.acceleration)) * self.payloadMass
+            #print(np.asarray(accelerations[-1]), " - ", np.asarray(self.acceleration), " * ", self.payloadMass, " = ", inertiaCompensation)
             inertiaCompensations.append(inertiaCompensation)
-            ftInTCP = self.convertForceInBase2TCP(ftInBase)# - inertiaCompensation
+            ftInTCP = self.convertForceInBase2TCP(np.asarray(ftInBase[0:3]))# -  inertiaCompensation)
             tcpForces.append(ftInTCP)
             
             magnitudeList.append(np.linalg.norm(ftInTCP))
@@ -136,7 +151,7 @@ class FTSensor:
             print("Contact!")
             event.set()
             self.saveForceVector(ftInTCP, self.robot.getActualTCPPose())
-            #self.plot(accelerations, inertiaCompensations, tcpForces)
+            #self.plot(np.asarray(accelerations), np.asarray(inertiaCompensations), np.asarray(tcpForces))
         else:
             print("No contact detected. CUSUM STOPPED!")
 

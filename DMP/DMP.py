@@ -22,16 +22,16 @@ class DMP:
         self.dmp.gp = goal
     
     def setObstacle(self, obstacle):
-        self.dmp.obstacles.append(obstacle)
+        self.dmp.obstacles.append(list(obstacle) + [0.01])
 
     def rollout(self, scaleTau = 1):
         self.tNew = np.arange(0, self.tau*scaleTau,0.002)
         self.dmp_p, self.dmp_dp, self.dmp_ddp = self.dmp.rollout(self.tNew, self.tau*scaleTau)
         return self.dmp_p, self.dmp_dp, self.dmp_ddp
 
-    def plotTrajectory(self):
+    def plotTrajectory(self, forceVectors, contactPoints, allPoints):
         self.dmp.plot2DDMP(self.demo_p, self.dmp_p,self.t, self.tNew)
-        self.dmp.plot3DDMP(self.demo_p,self.dmp_p)
+        self.dmp.plot3DDMP(self.demo_p,self.dmp_p, forceVectors=forceVectors,contactPoints = contactPoints, allPoints=allPoints)
 
 
 

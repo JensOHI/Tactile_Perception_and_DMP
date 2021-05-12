@@ -1,3 +1,4 @@
+from numpy.ma.core import concatenate
 from rtde_control import RTDEControlInterface
 from rtde_receive import RTDEReceiveInterface
 from rtde_io import RTDEIOInterface
@@ -7,16 +8,11 @@ from UR5_code.Robot import Robot
 from UR5_code.Demonstrate import Demonstrate
 from DMP.DMP import DMP
 from UR5_code.ServoControl import ServoControl
-from FTSensor.FTSensor import FTSensor
+from UR5_code.FTSensor.FTSensor import FTSensor
 import numpy as np
 import threading
-
-def combine(dmp_p):
-    traj = []
-    for i, p in enumerate(dmp_p):
-        pose = p.tolist() + [0.536, 3.094, 0]
-        traj.append(pose)
-    return traj
+import time
+from UR5_code.utils import combine
 
 
 def generateAObstacle(trajectory):
@@ -45,8 +41,6 @@ if __name__ == '__main__':
     ft.noiseFT(5)
     input("Start CUSUM. Press enter...")
     event = threading.Event()
-    forceThread = threading.Thread(target=ft.cusum, args=(event, 20,))
-    forceThread.start()
     
     
 
@@ -63,12 +57,26 @@ if __name__ == '__main__':
     #input("Play DMP. Press enter...")
     #robot.moveL(traj[-1])
     servoControl = ServoControl(robot)
-    servoThread = threading.Thread(target=servoControl.run, args=(event, traj, scaling,))
-    servoThread.start()
+     
+    backtrackedTraj = servoControl.run(event, traj, scaling)
     
     
-    #servoThread.join()
-    #dmp.plotTrajectory()
+    if backtrackedTraj:
+        contactPoints, forceVectors, allPoints = servoControl.searchForObstacle(event, backtrackedTraj)
+        #dmp.plotTrajectory(forceVectors=forceVectors, contactPoints=contactPoints, allPoints=allPoints)
+
+        for point in contactPoints.T.tolist():
+            dmp.setObstacle(point)
+        dmp_p, dmp_dp, dmp_dpp = dmp.rollout(scaling)
+        dmp.plotTrajectory(forceVectors, contactPoints, allPoints)
+        traj = combine(dmp_p)
+        event.clear()
+        backtrackedTraj = servoControl.run(event, traj, scaling)
+
+
+    
+
+    
     
 
     
