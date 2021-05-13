@@ -9,10 +9,10 @@ from UR5_code.Demonstrate import Demonstrate
 from DMP.DMP import DMP
 from UR5_code.ServoControl import ServoControl
 from UR5_code.FTSensor.FTSensor import FTSensor
-import numpy as np
 import threading
 import time
 from UR5_code.utils import combine
+import os
 
 
 def generateAObstacle(trajectory):
@@ -23,6 +23,88 @@ def generateAObstacle(trajectory):
 if __name__ == '__main__':
     ip = "192.168.1.111"
     robot = Robot(ip)
+    
+    homeQ = [-0.3917191664325159, -1.7317592106261195, 1.9507082144366663, -1.7880441151061, -1.5626705328570765, -1.62141088]
+    scaling = 1
+    contactPoints = forceVectors = allPoints = []
+    key = ''
+
+    servoControl = ServoControl(robot)
+    ft = FTSensor(robot)
+    demonstrate = Demonstrate(robot)
+
+    demonstrationFileExits = os.path.exists("demonstration.dat")
+    if demonstrationFileExits:
+        dmp = DMP()
+    
+    
+    while True:
+        print("h: Homes the robot.\nd: Records a demonstration.\ng: Set new goal for demonstration\ns: Set new start point for demonstration\nr: Run demonstration\nt: Set scaling on time constant (tau).\nn: Record noise on sensors.\np: Plot DMP.\nc: Clear obstacles.")
+        try:
+            key = input("Press a key ... then press enter: ")[0].lower()
+        except:
+            pass
+        
+
+        if key == 'h':
+            print("\n\nHoming robot \n\n")
+            robot.moveJ(homeQ)
+        elif key == 'd':
+            trajectory = demonstrate.show(8,saveAsFile=True)
+            dmp = DMP()
+            demonstrationFileExits = True
+        elif key == 'g':
+            if not demonstrationFileExits:
+                print("Cant set goal when no demonstration exits!")
+            else:
+                robot.teachMode()
+                input("Move robot to new goal ... then press enter!")
+                robot.endTeachMode()
+                goal = robot.getActualTCPPose()[0:3]
+                dmp.setGoal(goal)
+                print("New goal set to",goal)
+        elif key == 's':
+            if not demonstrationFileExits:
+                print("Cant set start when no demonstration exits!")
+            else:
+                robot.teachMode()
+                input("Move robot to new start ... then press enter!")
+                robot.endTeachMode()
+                start = robot.getActualTCPPose()[0:3]
+                dmp.setStart(start)
+                print("New start set to",start)
+        elif key == "r":
+            dmp_p, dmp_dp, dmp_dpp = dmp.rollout(scaling)
+            traj = combine(dmp_p)
+            backtrackedTraj = servoControl.run(traj, scaling)
+            if backtrackedTraj:
+                contactPoints, forceVectors, allPoints = servoControl.searchForObstacle(backtrackedTraj)
+                print(contactPoints, forceVectors, allPoints)
+                for point in contactPoints.T.tolist():
+                    dmp.setObstacle(point)
+        
+        elif key == 'p':
+            dmp_p, dmp_dp, dmp_dpp = dmp.rollout(scaling)
+            dmp.plotTrajectory(np.asarray(forceVectors), np.asarray(contactPoints), np.asarray(allPoints))
+
+        elif key == 't':
+            scaling = float(input("Set scaling on tau: "))
+        
+        elif key == 'n':
+            ft.noiseFT(2)
+
+        elif key == 'c':
+            dmp.clearObstacles()
+            contactPoints = forceVectors = allPoints = []
+        else:
+            print("Please input a single valied char!")
+            
+
+
+
+
+
+    '''
 
 
     #print(robot.getActualTCPPose())
@@ -38,13 +120,13 @@ if __name__ == '__main__':
     
     input("Start noise collection! Press enter...")
     ft = FTSensor(robot)
-    ft.noiseFT(5)
+    #ft.noiseFT(5)
     input("Start CUSUM. Press enter...")
     event = threading.Event()
     
     
 
-    scaling = 1
+    scaling = 2
     dmp = DMP()
     #dmp.setGoal(newGoal[0:3])
     #obstacle = generateAObstacle(trajectory)
@@ -73,7 +155,7 @@ if __name__ == '__main__':
         event.clear()
         backtrackedTraj = servoControl.run(event, traj, scaling)
 
-
+    '''
     
 
     
@@ -103,9 +185,4 @@ if __name__ == '__main__':
     print("Force in base: ", forces_in_base_rot)
     print("Force in tcp: ", forces_in_tcp)
     '''
-
-
-
-
-
 

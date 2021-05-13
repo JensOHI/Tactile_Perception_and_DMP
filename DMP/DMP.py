@@ -19,10 +19,16 @@ class DMP:
         self.dmp_ddp = []
     
     def setGoal(self, goal):
-        self.dmp.gp = goal
+        self.dmp.gp = np.asarray(goal)
+    
+    def setStart(self, start):
+        self.dmp.p0 = np.asarray(start)
+    
+    def clearObstacles(self):
+        self.dmp.obstacles.clear()
     
     def setObstacle(self, obstacle):
-        self.dmp.obstacles.append(list(obstacle) + [0.01])
+        self.dmp.obstacles.append(list(obstacle) + [0.04])
 
     def rollout(self, scaleTau = 1):
         self.tNew = np.arange(0, self.tau*scaleTau,0.002)

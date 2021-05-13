@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import numpy as np
 
 import matplotlib as mpl
+from numpy.ma.core import concatenate
 mpl.use('TkAgg') #For interactive plots https://stackoverflow.com/questions/49844189/how-to-get-interactive-plot-of-pyplot-when-using-pycharm
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -230,9 +231,12 @@ class PositionDMP():
         for obstacle in self.obstacles:
             #ax.scatter(obstacle[0], obstacle[1], obstacle[2], marker='o', color=(0, 1, 0))
             s = Sphere(ax, x = obstacle[0], y = obstacle[1], z = obstacle[2], radius = obstacle[3])
-        ax.quiver(forceVectors[0,:],forceVectors[1,:],forceVectors[2,:],forceVectors[6,:],forceVectors[7,:],forceVectors[8,:], length=0.05, color='black', label="Force Vector")
-        ax.scatter(contactPoints[0,:], contactPoints[1,:], contactPoints[2,:], color='r', label="Contact Points")
-        ax.scatter(allPoints[0,:], allPoints[1,:], allPoints[2,:], color='g',label="No Contact Points")
+        if forceVectors.any():
+            ax.quiver(forceVectors[0,:],forceVectors[1,:],forceVectors[2,:],forceVectors[6,:],forceVectors[7,:],forceVectors[8,:], length=0.14, color='black', label="Force Vector")
+        if contactPoints.any():
+            ax.scatter(contactPoints[0,:], contactPoints[1,:], contactPoints[2,:], color='r', label="Contact Points")
+        if allPoints.any():
+            ax.scatter(allPoints[0,:], allPoints[1,:], allPoints[2,:], color='g',label="No Contact Points")
         ax.legend()
         
         # ax.view_init(30,0)

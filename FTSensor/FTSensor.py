@@ -10,10 +10,10 @@ class FTSensor:
         self.noiseMagnitudeOfForce = []
         self.frequency = 1/500
         self.robot = robot
-        self.cusumHighThreshold = 70
+        self.cusumHighThreshold = 40
         self.noiseMean = 0
         self.noiseSTD = 1
-        self.contactMean = 4 #Newton
+        self.contactMean = 0.5 #Newton
         self.contactSTD = 1
         self.acceleration = []
         self.payloadMass = 3
@@ -59,7 +59,7 @@ class FTSensor:
         print("Noise mean:", self.noiseMean, "Noise std:", self.noiseSTD,"Acceleration:",self.acceleration)
 
     def saveForceVector(self, vector, pose):
-        with open("forceVector.txt", 'w') as file:
+        with open("forceVector.txt", 'w+') as file:
             string = ""
             for value in pose:
                 string += str(value) + " "
@@ -119,14 +119,16 @@ class FTSensor:
             mean = np.asarray(magnitudeList).mean()
             #std = np.asarray(magnitudeList).std()
 
-            normalizedMean = (mean - self.contactMean)/self.contactSTD
+            normalizedMean = (mean - self.contactMean)#/self.contactSTD
             #print(magnitudeList[-1], cusumValues[-1], mean, normalizedMean)
             cusumValue = cusumValues[-1]+normalizedMean
             cusumValue = np.maximum(0,cusumValue)
             cusumValues.append(cusumValue)
             #print(cusumValue)
 
-
+            if time.time() - resetTime > 0.1:
+                self.robot.zeroFtSensor()
+                resetTime = time.time()
 
             #self.robot.zeroFtSensor()
             diff = time.time() - startTime
