@@ -6,18 +6,6 @@ import time
 import matplotlib.pyplot as plt
 from UR5_code.Robot import Robot
 from scipy.spatial.transform import Rotation as R
-from scipy.signal import butter, lfilter, freqz, filtfilt
-
-def butter_lowpass(cutoff, fs, order=5):
-    nyq = 0.5 * fs
-    normal_cutoff = cutoff / nyq
-    b, a = butter(order, normal_cutoff, btype='low', analog=False)
-    return b, a
-
-def butter_lowpass_filter(data, cutoff, fs, order=5):
-    b, a = butter_lowpass(cutoff, fs, order=order)
-    y = lfilter(b, a, data)
-    return y
 
 def convertAccInTCP2Base(robot,accInTCP):
         tcpPose = robot.getActualTCPPose()
@@ -153,12 +141,19 @@ def main():
     pos = []
 
     noiseAcc = []
+    noiseFT = []
     t1 = time.time()
     while time.time() - t1 < 1.5:
+        noiseFT.append(np.linalg.norm(robot.getActualTCPPose()[0:3]))
         noiseAcc.append(convertAccInTCP2Base(robot, robot.getActualToolAccelerometer()))
     avgNoiseAcc = np.mean(np.asarray(noiseAcc), axis=0)
-
+    noiseMean = np.mean(np.asarray(noiseFT))
+    noiseSTD = 1#np.std(np.asarray(noiseFT))
+    print(noiseMean, noiseSTD)
     cusumValues = [0]
+
+    contactMean = 5
+    threshold = 70
 
     i = 0
     count = 0
@@ -175,27 +170,21 @@ def main():
         inertiaCompensations.append(accForce)
 
         ftSensors.append(robot.getActualTCPForce()[0:3])    
-        order = 1
-        cutoff = 1
-        f1 = butter_lowpass_filter(np.asarray(ftSensors)[:,0],cutoff,hz,order)
-        f2 = butter_lowpass_filter(np.asarray(ftSensors)[:,1],cutoff,hz,order)
-        f3 = butter_lowpass_filter(np.asarray(ftSensors)[:,2],cutoff,hz,order)
-        ftSensors.pop()
-        ftSensors.append([f1[-1],f2[-1],f3[-1]])
         ftMagnitude.append(np.linalg.norm(ftSensors[-1]))
-        #filteredFTMagnitude = butter_lowpass_filter(ftMagnitude,0.7,hz,1)
-        #filt = butter_lowpass_filter(ftMagnitude,0.3,hz)
-        #filteredFTSensors.append(filt[-1])
+
+
 
 
         ftCompensation = np.asarray(ftSensors[-1]) + np.asarray(inertiaCompensations[-1]) * [1,1,1]
         #print(np.asarray(ftSensors[-1]), " + ", np.asarray(inertiaCompensations[-1]) * [-1,1,-1], " = ", ftCompensation)
         ftCompensations.append(ftCompensation)
 
-        cusumValues.append(np.maximum(0, cusumValues[-1] + (ftMagnitude[-1] - ftMagnitude[-2])))
+        sk = ((ftMagnitude[-1] - np.mean(ftMagnitude))**2 - (ftMagnitude[-1] - contactMean)**2)/(2*noiseSTD**2)
+        cusumValues.append(np.maximum(0, cusumValues[-1] + sk))
 
         
-
+        if cusumValues[-1] > threshold:
+            break
 
 
         '''

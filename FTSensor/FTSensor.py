@@ -10,10 +10,10 @@ class FTSensor:
         self.noiseMagnitudeOfForce = []
         self.frequency = 1/500
         self.robot = robot
-        self.cusumHighThreshold = 40
+        self.cusumHighThreshold = 70
         self.noiseMean = 0
         self.noiseSTD = 1
-        self.contactMean = 0.5 #Newton
+        self.contactMean = 2.5 #Newton
         self.contactSTD = 1
         self.acceleration = []
         self.payloadMass = 3
@@ -119,7 +119,7 @@ class FTSensor:
             mean = np.asarray(magnitudeList).mean()
             #std = np.asarray(magnitudeList).std()
 
-            normalizedMean = (mean - self.contactMean)#/self.contactSTD
+            normalizedMean = ((magnitudeList[-1] - mean)**2-(magnitudeList[-1] - self.contactMean)**2)/(2*self.contactSTD**2) #(mean - self.contactMean)#/self.contactSTD
             #print(magnitudeList[-1], cusumValues[-1], mean, normalizedMean)
             cusumValue = cusumValues[-1]+normalizedMean
             cusumValue = np.maximum(0,cusumValue)

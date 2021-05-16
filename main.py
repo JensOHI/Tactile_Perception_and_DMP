@@ -39,7 +39,7 @@ if __name__ == '__main__':
     
     
     while True:
-        print("h: Homes the robot.\nd: Records a demonstration.\ng: Set new goal for demonstration\ns: Set new start point for demonstration\nr: Run demonstration\nt: Set scaling on time constant (tau).\nn: Record noise on sensors.\np: Plot DMP.\nc: Clear obstacles.")
+        print("h: Homes the robot.\nd: Records a demonstration.\ng: Set new goal for demonstration\ns: Set new start point for demonstration\nr: Run demonstration\nt: Set scaling on time constant (scaling: " + str(scaling) + ").\nn: Record noise on sensors.\np: Plot DMP.\nc: Clear obstacles.")
         try:
             key = input("Press a key ... then press enter: ")[0].lower()
         except:
@@ -86,6 +86,7 @@ if __name__ == '__main__':
         elif key == 'p':
             dmp_p, dmp_dp, dmp_dpp = dmp.rollout(scaling)
             dmp.plotTrajectory(np.asarray(forceVectors), np.asarray(contactPoints), np.asarray(allPoints))
+            dmp.plotTrajectory(np.asarray([]), np.asarray([]), np.asarray([]), drawObstacles = True)
 
         elif key == 't':
             scaling = float(input("Set scaling on tau: "))
@@ -96,6 +97,10 @@ if __name__ == '__main__':
         elif key == 'c':
             dmp.clearObstacles()
             contactPoints = forceVectors = allPoints = []
+        elif key == 'f':
+            robot.teachMode()
+            input("Press enter to exit freedrive!")
+            robot.endTeachMode()
         else:
             print("Please input a single valied char!")
             

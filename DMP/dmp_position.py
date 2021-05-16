@@ -38,8 +38,16 @@ class PositionDMP():
 
         #Obstacles
         numObstacles = 1
+        #pos1 = [-0.322, -0.387, -0.426]
+        #pos2 = [-0.686, 0.438, -0.426]
+        #xlinspace = np.linspace(pos1[0], pos2[0], 5)
+        #ylinspace = np.linspace(pos1[1], pos2[1], 5)
+        #zlinspace = np.asarray([pos1[2]]*len(xlinspace))
         #Obstacles first 3 element is the vector and the last is the radius of the sphere.
         self.obstacles = []#[[0.52445584, 0.39893147, 0.41805384, 0.01], [0.661281, 0.156913, 0.382968, 0.02]]#np.random.random((numObstacles, 3)) * 2 - 1
+        #for i in range(len(zlinspace)):
+        #    for j in range(len(zlinspace)):
+        #        self.obstacles.append([xlinspace[i],ylinspace[j],zlinspace[i],0.001])
         self.gamma_o = 1000
         self.gamma_p = 1000
         self.gamma_d = 50
@@ -219,7 +227,7 @@ class PositionDMP():
    
         
 
-    def plot3DDMP(self, demo_p, dmp_p, forceVectors, contactPoints, allPoints):
+    def plot3DDMP(self, demo_p, dmp_p, forceVectors, contactPoints, allPoints, drawObstacles):
         # 3D plot the DMP against the original demonstration
         fig2 = plt.figure(2)
         ax = plt.axes(projection='3d')
@@ -228,11 +236,11 @@ class PositionDMP():
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
-        for obstacle in self.obstacles:
-            #ax.scatter(obstacle[0], obstacle[1], obstacle[2], marker='o', color=(0, 1, 0))
-            s = Sphere(ax, x = obstacle[0], y = obstacle[1], z = obstacle[2], radius = obstacle[3])
+        if drawObstacles:
+            for obstacle in self.obstacles:
+                s = Sphere(ax, x = obstacle[0], y = obstacle[1], z = obstacle[2], radius = obstacle[3])
         if forceVectors.any():
-            ax.quiver(forceVectors[0,:],forceVectors[1,:],forceVectors[2,:],forceVectors[6,:],forceVectors[7,:],forceVectors[8,:], length=0.14, color='black', label="Force Vector")
+            ax.quiver(forceVectors[0,:],forceVectors[1,:],forceVectors[2,:],forceVectors[6,:],forceVectors[7,:],forceVectors[8,:], length=0.03, color='black', label="Force Vector")
         if contactPoints.any():
             ax.scatter(contactPoints[0,:], contactPoints[1,:], contactPoints[2,:], color='r', label="Contact Points")
         if allPoints.any():
