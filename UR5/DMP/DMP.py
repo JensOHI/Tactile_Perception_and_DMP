@@ -1,11 +1,12 @@
 from __future__ import division, print_function
 from DMP.dmp_position import PositionDMP
 import numpy as np
+from utils import DEMONSTRATION_FILENAME
 
 
 class DMP:
-    def __init__(self, filename = "demonstration.dat", N = 50, alpha = 48):
-        self.demo = np.loadtxt("demonstration.dat", delimiter=" ", skiprows=1)
+    def __init__(self, N = 50, alpha = 48):
+        self.demo = np.loadtxt(DEMONSTRATION_FILENAME, delimiter=" ", skiprows=1)
 
         self.dmp = PositionDMP(n_bfs=N, alpha=alpha)
 

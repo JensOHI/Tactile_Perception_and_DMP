@@ -1,3 +1,7 @@
+NOISE_FILENAME = "noiseValues.txt"
+FORCEVECTOR_FILENAME = "forceVector.txt"
+DEMONSTRATION_FILENAME = "demonstration.dat"
+
 def combine(dmp_p):
     traj = []
     for i, p in enumerate(dmp_p):

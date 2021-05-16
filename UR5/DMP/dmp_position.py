@@ -221,6 +221,7 @@ class PositionDMP():
         axs[2].set_xlabel('t (s)')
         axs[2].set_ylabel('Z (m)')
         axs[2].legend()
+        fig1.suptitle("Position of TCP")
 
     
     

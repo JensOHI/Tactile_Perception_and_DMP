@@ -1,5 +1,4 @@
 import time
-import keyboard
 import os
 
 
@@ -26,18 +25,14 @@ class Demonstrate:
 
 
 
-    def show(self, demonstrateTime = 5, saveAsFile = False, filename = "demonstration"):
-        print("Demonstrate started! Please teach it now :D")
+    def show(self, demonstrateTime = 5, saveAsFile = True, filename = "demonstration"):
         self.tcps = []
         timeStart = time.time()
         self.robot.teachMode()
-        while True:
+        while time.time() - timeStart < demonstrateTime:
             startTime = time.time()
+
             self.tcps.append(self.robot.getActualTCPPose())
-
-            if time.time() - timeStart > demonstrateTime:
-                break
-
 
             diffTime = time.time() - startTime
             if (diffTime < self.frequency):
