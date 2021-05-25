@@ -92,5 +92,7 @@ if __name__ == '__main__':
             robot.teachMode()
             input("Press enter to exit freedrive!")
             robot.endTeachMode()
+        elif key == 'q':
+            exit()
         else:
             print("Please input a single valied char!")

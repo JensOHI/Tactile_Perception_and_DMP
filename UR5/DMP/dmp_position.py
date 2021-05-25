@@ -48,8 +48,8 @@ class PositionDMP():
         #for i in range(len(zlinspace)):
         #    for j in range(len(zlinspace)):
         #        self.obstacles.append([xlinspace[i],ylinspace[j],zlinspace[i],0.001])
-        self.gamma_o = 1000
-        self.gamma_p = 1000
+        self.gamma_o = 2500
+        self.gamma_p = 2500
         self.gamma_d = 50
         self.k = 0.01
         self.beta2 = 20/np.pi
@@ -97,23 +97,25 @@ class PositionDMP():
                     obstacle = obstacleInformation[0:3]
                     radius = obstacleInformation[-1]
 
-                    obstacleVector_o = obstacle - y;
+                    obstacleVector_o = obstacle - y
                     angle_o = angleWithDirection(obstacleVector_o, dy)
                     psi_o, Rv_o = calculatePsi(obstacleVector_o, dy, angle_o)
-                    p_o += self.gamma_o * Rv_o * psi_o
-
+                    
 
                     obstacleVector_p = nearestPointOnObstacleVector(obstacle, radius, y)
                     angle_p = angleWithDirection(obstacleVector_p, dy)
                     psi_p, Rv_p = calculatePsi(obstacleVector_p, dy, angle_p)
-                    p_p += self.gamma_p * Rv_p * psi_p
+                    
 
-                    if(np.linalg.norm(obstacleVector_p) < 1e-2):
-                        p_p *= 1000
+                    #if(np.linalg.norm(obstacleVector_p) < 1e-2):
+                    #    p_p *= 1000
 
 
                     Rv_avg = (Rv_o + Rv_p) * 0.5
-                    p_d += self.gamma_d * Rv_avg * np.exp(-self.k*np.linalg.norm(obstacleVector_p))
+                    if not (angle_o > np.pi / 2 or angle_p > np.pi/2):
+                        p_o += self.gamma_o * Rv_o * psi_o
+                        p_p += self.gamma_p * Rv_p * psi_p
+                        p_d += self.gamma_d * Rv_avg * np.exp(-self.k*np.linalg.norm(obstacleVector_p))
 
             return p_o + p_p + p_d
         # DMP system acceleration
